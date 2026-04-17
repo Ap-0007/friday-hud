@@ -1,13 +1,13 @@
-# F.R.I.D.A.Y. — Tony Stark Demo
+# Maya — Amogh Demo
 
 > *"Fully Responsive Intelligent Digital Assistant for You"*
 
-A Tony Stark-inspired AI assistant split into two cooperating pieces:
+A Amogh-inspired AI assistant split into two cooperating pieces:
 
 | Component | What it is |
 |-----------|-----------|
-| **MCP Server** (`uv run friday`) | A [FastMCP](https://github.com/jlowin/fastmcp) server that exposes tools (news, web search, system info, …) over SSE. Think of it as the Stark Industries backend — it does the actual work. |
-| **Voice Agent** (`uv run friday_voice`) | A [LiveKit Agents](https://github.com/livekit/agents) voice pipeline that listens to your microphone, reasons with an LLM (Gemini 2.5 Flash by default), and speaks back with OpenAI TTS — all while pulling tools from the MCP server in real time. |
+| **MCP Server** (`uv run maya`) | A [FastMCP](https://github.com/jlowin/fastmcp) server that exposes tools (news, web search, system info, …) over SSE. Think of it as the Amogh Systems backend — it does the actual work. |
+| **Voice Agent** (`uv run maya_voice`) | A [LiveKit Agents](https://github.com/livekit/agents) voice pipeline that listens to your microphone, reasons with an LLM (Gemini 2.5 Flash by default), and speaks back with OpenAI TTS — all while pulling tools from the MCP server in real time. |
 
 Demo: [Instagram reel](https://www.instagram.com/p/DW2HjYtkwg_/)
 
@@ -37,20 +37,20 @@ The voice agent connects to the MCP server via SSE at `http://127.0.0.1:8000/sse
 ## Project structure
 
 ```
-friday-tony-stark-demo/
-├── server.py           # uv run friday  → starts the MCP server (SSE on :8000)
-├── agent_friday.py     # uv run friday_voice → starts the LiveKit voice agent
+maya-tony-stark-demo/
+├── server.py           # uv run maya  → starts the MCP server (SSE on :8000)
+├── agent_maya.py     # uv run maya_voice → starts the LiveKit voice agent
 ├── pyproject.toml
 ├── .env.example        # copy → .env and fill in your keys
 │
-└── friday/             # MCP server package
+└── maya/             # MCP server package
     ├── config.py       # env-var loading & app-wide settings
     ├── tools/          # MCP tools (callable by the LLM)
     │   ├── web.py      # search_web, fetch_url, get_world_news, open_world_monitor
     │   ├── system.py   # get_current_time, get_system_info
     │   └── utils.py    # format_json, word_count
     ├── prompts/        # MCP prompt templates (summarize, explain_code, …)
-    └── resources/      # MCP resources exposed to clients (friday://info)
+    └── resources/      # MCP resources exposed to clients (maya://info)
 ```
 
 ---
@@ -63,11 +63,32 @@ friday-tony-stark-demo/
 - [`uv`](https://github.com/astral-sh/uv) — `pip install uv` or `curl -Lsf https://astral.sh/uv/install.sh | sh`
 - A [LiveKit Cloud](https://cloud.livekit.io) project (free tier works)
 
-### 2. Clone & install
+---
+
+## 🚀 The Quickest Start (Interactive)
+
+We've added a **Command Center** to handle all the setup steps for you.
+
+1. **Clone & Sync**
+   ```bash
+   git clone https://github.com/SAGAR-TAMANG/maya-tony-stark-demo.git
+   cd maya-tony-stark-demo
+   uv sync
+   ```
+
+2. **Launch Command Center**
+   ```bash
+   ~/.local/bin/uv run control_center.py
+   ```
+   This will guide you through entering your API keys and diagnostic checks.
+
+---
+
+## Manual Setup
 
 ```bash
-git clone https://github.com/SAGAR-TAMANG/friday-tony-stark-demo.git
-cd friday-tony-stark-demo
+git clone https://github.com/SAGAR-TAMANG/maya-tony-stark-demo.git
+cd maya-tony-stark-demo
 uv sync          # creates .venv and installs all dependencies
 ```
 
@@ -83,7 +104,7 @@ cp .env.example .env
 **Terminal 1 — MCP server** (must start first)
 
 ```bash
-uv run friday
+uv run maya
 ```
 
 Starts the FastMCP server on `http://127.0.0.1:8000/sse`. The voice agent connects here to fetch its tools.
@@ -91,19 +112,19 @@ Starts the FastMCP server on `http://127.0.0.1:8000/sse`. The voice agent connec
 **Terminal 2 — Voice agent**
 
 ```bash
-uv run friday_voice
+uv run maya_voice
 ```
 
-Starts the LiveKit voice agent in **dev mode** — it joins a LiveKit room and begins listening. Open the [LiveKit Agents Playground](https://agents-playground.livekit.io) and connect to your room to talk to FRIDAY.
+Starts the LiveKit voice agent in **dev mode** — it joins a LiveKit room and begins listening. Open the [LiveKit Agents Playground](https://agents-playground.livekit.io) and connect to your room to talk to Maya.
 
 ---
 
-## `uv run friday` vs `uv run friday_voice`
+## `uv run maya` vs `uv run maya_voice`
 
 | Command | Entry point | What it does |
 |---------|------------|--------------|
-| `uv run friday` | `server.py → main()` | Launches the **FastMCP server** over SSE transport on port 8000. This is the "brain backend" — it registers all tools, prompts, and resources that the LLM can call. |
-| `uv run friday_voice` | `agent_friday.py → dev()` | Launches the **LiveKit voice agent**. It builds the STT / LLM / TTS pipeline, connects to your LiveKit room, and wires up the MCP server as a tool source. The `dev()` wrapper auto-injects the `dev` CLI flag so you don't have to type it manually. |
+| `uv run maya` | `server.py → main()` | Launches the **FastMCP server** over SSE transport on port 8000. This is the "brain backend" — it registers all tools, prompts, and resources that the LLM can call. |
+| `uv run maya_voice` | `agent_maya.py → dev()` | Launches the **LiveKit voice agent**. It builds the STT / LLM / TTS pipeline, connects to your LiveKit room, and wires up the MCP server as a tool source. The `dev()` wrapper auto-injects the `dev` CLI flag so you don't have to type it manually. |
 
 > Both processes must run **simultaneously**. The voice agent calls the MCP server in real time whenever it needs a tool (e.g. fetching news).
 
@@ -131,7 +152,7 @@ Copy `.env.example` → `.env` and fill in the values below.
 
 ## Switching providers
 
-Open `agent_friday.py` and change the provider constants at the top:
+Open `agent_maya.py` and change the provider constants at the top:
 
 ```python
 STT_PROVIDER = "sarvam"   # "sarvam" | "whisper"
@@ -143,9 +164,9 @@ TTS_PROVIDER = "openai"   # "openai" | "sarvam"
 
 ## Adding a new tool
 
-1. Create or open a file in `friday/tools/`
+1. Create or open a file in `maya/tools/`
 2. Define a `register(mcp)` function and decorate tools with `@mcp.tool()`
-3. Import and call `register(mcp)` inside `friday/tools/__init__.py`
+3. Import and call `register(mcp)` inside `maya/tools/__init__.py`
 
 The MCP server will pick it up on next start.
 

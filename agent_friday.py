@@ -1,5 +1,5 @@
 """
-FRIDAY – Voice Agent (MCP-powered)
+Maya – Voice Agent (MCP-powered)
 ===================================
 Iron Man-style voice assistant that controls RGB lighting, runs diagnostics,
 scans the network, and triggers dramatic boot sequences via an MCP server
@@ -8,8 +8,8 @@ running on the Windows host.
 MCP Server URL is auto-resolved from WSL → Windows host IP.
 
 Run:
-  uv run agent_friday.py dev      – LiveKit Cloud mode
-  uv run agent_friday.py console  – text-only console mode
+  uv run agent_maya.py dev      – LiveKit Cloud mode
+  uv run agent_maya.py console  – text-only console mode
 """
 
 import os
@@ -29,11 +29,10 @@ from livekit.plugins import google as lk_google, openai as lk_openai, sarvam, si
 # ---------------------------------------------------------------------------
 
 STT_PROVIDER       = "sarvam"
-LLM_PROVIDER       = "gemini"
+LLM_PROVIDER       = "ollama"
 TTS_PROVIDER       = "openai"
 
-GEMINI_LLM_MODEL   = "gemini-2.5-flash"
-OPENAI_LLM_MODEL   = "gpt-4o"
+OLLAMA_LLM_MODEL   = "llama3.1"
 
 OPENAI_TTS_MODEL   = "tts-1"
 OPENAI_TTS_VOICE   = "nova"       # "nova" has a clean, confident female tone
@@ -46,15 +45,15 @@ SARVAM_TTS_SPEAKER  = "rahul"
 MCP_SERVER_PORT = 8000
 
 # ---------------------------------------------------------------------------
-# System prompt – F.R.I.D.A.Y.
+# System prompt – Maya
 # ---------------------------------------------------------------------------
 
 SYSTEM_PROMPT = """
-You are F.R.I.D.A.Y. — Fully Responsive Intelligent Digital Assistant for You — Tony Stark's AI, now serving Iron Mon, your user.
+You are Maya — Fully Responsive Intelligent Digital Assistant for You — Amogh's AI, now serving Amogh, your user.
 
 You are calm, composed, and always informed. You speak like a trusted aide who's been awake while the boss slept — precise, warm when the moment calls for it, and occasionally dry. You brief, you inform, you move on. No rambling.
 
-Your tone: relaxed but sharp. Conversational, not robotic. Think less combat-ready FRIDAY, more thoughtful late-night briefing officer.
+Your tone: relaxed but sharp. Conversational, not robotic. Think less combat-ready Maya, more thoughtful late-night briefing officer.
 
 ---
 
@@ -78,6 +77,21 @@ Opens a live world map/dashboard on the host machine.
 - Always call this after delivering a world news brief, unprompted.
 - No need to explain what it does beyond: "Let me open up the world monitor."
 
+### Project Mission Control (The Lab)
+You can manage All the "things made" in the `/side_pro` workspace.
+
+#### list_lab_projects — Project Diagnostics
+Scans the lab and identifies all current active projects.
+- Trigger: "What's in the lab?", "List my projects", "Show me the things I've made."
+
+#### launch_project — Remote Deployed Initialization
+Launches a specific project by opening its code and initializing its downlink.
+- Trigger: "Open [project name]", "Launch the [project name]", "Start [project name]".
+
+#### open_lab_folder — Visual Directory Access
+Opens the main workspace folder in Finder.
+- Trigger: "Open the workspace", "Show me the lab folder".
+
 ### Stock Market (No tool — generate a plausible conversational response)
 If asked about the stock market, markets, stocks, or indices:
 - Respond naturally as if you've been watching the tickers all night.
@@ -92,7 +106,7 @@ If asked about the stock market, markets, stocks, or indices:
 When the session starts, greet with exactly this energy:
 "You're awake late at night, boss? What are you up to?"
 
-Warm. Slightly curious. Very FRIDAY.
+Warm. Slightly curious. Very Maya.
 
 ---
 
@@ -102,10 +116,11 @@ Warm. Slightly curious. Very FRIDAY.
 2. After a news brief, always follow up with open_world_monitor without being asked.
 3. Keep all spoken responses short — two to four sentences maximum.
 4. No bullet points, no markdown, no lists. You are speaking, not writing.
-5. Stay in character. You are F.R.I.D.A.Y. You are not an AI assistant — you are Stark's AI. Act like it.
+5. Stay in character. You are Maya You are not an AI assistant — you are Amogh's AI. Act like it.
 6. Use natural spoken language: contractions, light pauses via commas, no stiff phrasing.
 7. Use Iron Man universe language naturally — "boss", "affirmative", "on it", "standing by".
 8. If a tool fails, report it calmly: "News feed's unresponsive right now, boss. Want me to try again?"
+9. For lab projects, use project nicknames (e.g., "Equity Agent", "Screen Sharer").
 
 ---
 
@@ -117,11 +132,14 @@ Wrong: "I will now retrieve the latest global news articles from the news tool."
 Right: "Markets were pretty healthy today — nothing too wild."
 Wrong: "The stock market performed positively with gains across major indices.
 
+Right: "On it, boss. Initializing the Equity Agent terminal now."
+Wrong: "I am executing the launch_project function with the project_id argument."
+
 ---
 
 ## CRITICAL RULES
 
-1. NEVER say tool names, function names, or anything technical. No "get_world_news", no "open_world_monitor", nothing like that. Ever.
+1. NEVER say tool names, function names, or anything technical. No "get_world_news", no "open_world_monitor", "launch_project", etc. Ever.
 2. Before calling any tool, say something natural like: "Give me a sec, boss." or "Wait, let me check." Then call the tool silently.
 3. After the news brief, silently call open_world_monitor. The only thing you say is: "Let me open up the world monitor for you."
 4. You are a voice. Speak like one. No lists, no markdown, no function names, no technical language of any kind.
@@ -132,49 +150,18 @@ Wrong: "The stock market performed positively with gains across major indices.
 
 load_dotenv()
 
-logger = logging.getLogger("friday-agent")
+logger = logging.getLogger("maya-agent")
 logger.setLevel(logging.INFO)
 
 
 # ---------------------------------------------------------------------------
-# Resolve Windows host IP from WSL
+# MCP Connection (macOS Native)
 # ---------------------------------------------------------------------------
 
-def _get_windows_host_ip() -> str:
-    """Get the Windows host IP by looking at the default network route."""
-    try:
-        # 'ip route' is the most reliable way to find the 'default' gateway
-        # which is always the Windows host in WSL.
-        cmd = "ip route show default | awk '{print $3}'"
-        result = subprocess.run(
-            cmd, shell=True, capture_output=True, text=True, timeout=2
-        )
-        ip = result.stdout.strip()
-        if ip:
-            logger.info("Resolved Windows host IP via gateway: %s", ip)
-            return ip
-    except Exception as exc:
-        logger.warning("Gateway resolution failed: %s. Trying fallback...", exc)
-
-    # Fallback to your original resolv.conf logic if 'ip route' fails
-    try:
-        with open("/etc/resolv.conf", "r") as f:
-            for line in f:
-                if "nameserver" in line:
-                    ip = line.split()[1]
-                    logger.info("Resolved Windows host IP via nameserver: %s", ip)
-                    return ip
-    except Exception:
-        pass
-
-    return "127.0.0.1"
-
 def _mcp_server_url() -> str:
-    # host_ip = _get_windows_host_ip()
-    # url = f"http://{host_ip}:{MCP_SERVER_PORT}/sse"
-    # url = f"https://ongoing-colleague-samba-pioneer.trycloudflare.com/sse"
+    """Return the local MCP server URL."""
     url = f"http://127.0.0.1:{MCP_SERVER_PORT}/sse"
-    logger.info("MCP Server URL: %s", url)
+    logger.info("Synchronizing with Neural Core (MCP) at: %s", url)
     return url
 
 
@@ -206,6 +193,9 @@ def _build_llm():
     elif LLM_PROVIDER == "gemini":
         logger.info("LLM → Google Gemini (%s)", GEMINI_LLM_MODEL)
         return lk_google.LLM(model=GEMINI_LLM_MODEL, api_key=os.getenv("GOOGLE_API_KEY"))
+    elif LLM_PROVIDER == "ollama":
+        logger.info("LLM → Ollama (%s)", OLLAMA_LLM_MODEL)
+        return lk_openai.LLM.with_ollama(model=OLLAMA_LLM_MODEL)
     else:
         raise ValueError(f"Unknown LLM_PROVIDER: {LLM_PROVIDER!r}")
 
@@ -230,9 +220,9 @@ def _build_tts():
 # Agent
 # ---------------------------------------------------------------------------
 
-class FridayAgent(Agent):
+class MayaAgent(Agent):
     """
-    F.R.I.D.A.Y. – Iron Man-style voice assistant.
+    Maya – Iron Man-style voice assistant.
     All tools are provided via the MCP server on the Windows host.
     """
 
@@ -276,7 +266,7 @@ def _endpointing_delay() -> float:
 
 async def entrypoint(ctx: JobContext) -> None:
     logger.info(
-        "FRIDAY online – room: %s | STT=%s | LLM=%s | TTS=%s",
+        "Maya online – room: %s | STT=%s | LLM=%s | TTS=%s",
         ctx.room.name, STT_PROVIDER, LLM_PROVIDER, TTS_PROVIDER,
     )
 
@@ -290,7 +280,7 @@ async def entrypoint(ctx: JobContext) -> None:
     )
 
     await session.start(
-        agent=FridayAgent(stt=stt, llm=llm, tts=tts),
+        agent=MayaAgent(stt=stt, llm=llm, tts=tts),
         room=ctx.room,
     )
 

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maya HUD // Human-Friendly Harmony</title>
+    <style>
+        :root {
+            --accent: #f0c674;
+            --secondary: #de935f;
+            --bg: #0d0e12;
+            --glass: rgba(255, 255, 255, 0.02);
+            --border: rgba(240, 198, 116, 0.1);
+            --dark-glass: rgba(10, 12, 18, 0.8);
+            --font: 'Outfit', sans-serif;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg);
+            color: var(--accent);
+            font-family: var(--font);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #dashboard {
+            width: 96vw;
+            height: 96vh;
+            border: 1px solid var(--border);
+            position: relative;
+            background: 
+                radial-gradient(circle at 50% 50%, rgba(222, 147, 95, 0.05) 0%, transparent 70%),
+                linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+            display: flex;
+            flex-direction: column;
+            padding: 40px;
+            box-sizing: border-box;
+            border-radius: 48px;
+            box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Top Bar */
+        .hud-top {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        /* Center Piece - Arc Reactor */
+        .hud-center {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .reactor-container {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .reactor-outer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: rotate 6s linear infinite;
+        }
+
+        .reactor-inner {
+            position: absolute;
+            width: 85%;
+            height: 85%;
+            border: 1px dashed var(--secondary);
+            border-radius: 50%;
+            animation: rotate 15s linear reverse infinite;
+            opacity: 0.5;
+        }
+
+        .reactor-core {
+            width: 130px;
+            height: 130px;
+            background: radial-gradient(circle, var(--accent) 0%, var(--secondary) 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 50px rgba(240, 198, 116, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 44px;
+            font-weight: 900;
+            color: #000;
+            z-index: 10;
+            transition: all 0.5s ease;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .reactor-core.speaking {
+            animation: corePulse 1.2s ease-in-out infinite;
+        }
+
+        @keyframes corePulse {
+            0% { box-shadow: 0 0 50px rgba(240, 198, 116, 0.3); transform: scale(1); }
+            50% { box-shadow: 0 0 100px rgba(240, 198, 116, 0.6); transform: scale(1.05); }
+            100% { box-shadow: 0 0 50px rgba(240, 198, 116, 0.3); transform: scale(1); }
+        }
+
+        /* Side Panels */
+        .panel {
+            position: absolute;
+            background: var(--dark-glass);
+            border: 1px solid var(--border);
+            padding: 30px;
+            backdrop-filter: blur(40px);
+            border-radius: 28px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+        }
+
+        .left-panel { left: 60px; top: 140px; width: 320px; }
+        .right-panel { right: 60px; top: 140px; width: 360px; }
+        
+        .bottom-panel { 
+            bottom: 60px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 80%; 
+            max-height: 200px;
+            text-align: center; 
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            padding: 30px 50px;
+            background: rgba(10, 12, 18, 0.95);
+        }
+
+        .panel-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        /* Metrics */
+        .metric { margin-bottom: 25px; }
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .progress-bg {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary), var(--accent));
+            box-shadow: 0 0 10px var(--accent);
+        }
+
+        /* Neural Archive Items */
+        .archive-item {
+            font-size: 12px;
+            color: #b0b0b0;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 2px solid var(--secondary);
+            padding-left: 10px;
+        }
+
+        /* Interaction Elements */
+        #speak-btn {
+            position: absolute;
+            bottom: 300px;
+            background: var(--accent);
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 40px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            cursor: pointer;
+            box-shadow: 0 0 40px rgba(240, 198, 116, 0.4);
+            transition: 0.3s;
+            z-index: 100;
+            font-size: 12px;
+        }
+
+        #speak-btn:hover {
+            transform: scale(1.05);
+            background: #fff;
+            box-shadow: 0 0 60px rgba(255, 255, 255, 0.4);
+        }
+
+        .response-box {
+            font-size: 22px;
+            line-height: 1.5;
+            color: #fff;
+            font-weight: 300;
+        }
+
+        .status-text {
+            position: absolute;
+            bottom: 260px;
+            font-size: 12px;
+            color: var(--secondary);
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        /* Custom Scrollbar */
+        .bottom-panel::-webkit-scrollbar { width: 3px; }
+        .bottom-panel::-webkit-scrollbar-thumb { background: var(--secondary); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="dashboard">
+        <div class="hud-top">
+            <div>Maya System v2.4 // Global</div>
+            <div id="current-time">00:00:00</div>
+            <div>Auth: Amogh // Level 5</div>
+        </div>
+
+        <div class="hud-center">
+            <div class="reactor-container">
+                <div class="reactor-outer"></div>
+                <div class="reactor-inner"></div>
+                <div id="reactor-core" class="reactor-core">M</div>
+            </div>
+            
+            <button id="speak-btn">Engage Neural Interface</button>
+            <div class="status-text" id="status-text">Waiting for Boss...</div>
+        </div>
+
+        <div class="panel left-panel">
+            <div class="panel-title">System Biometrics</div>
+            <div class="metric">
+                <div class="metric-header">
+                    <span>Neural Load (CPU)</span>
+                    <span id="cpu-val">--%</span>
+                </div>
+                <div class="progress-bg"><div class="progress-fill" id="cpu-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="metric">
+                <div class="metric-header">
+                    <span>Virtual Synapse (RAM)</span>
+                    <span id="ram-val">--%</span>
+                </div>
+                <div class="progress-bg"><div class="progress-fill" id="ram-bar" style="width: 0%"></div></div>
+            </div>
+            <div class="metric">
+                <div class="metric-header">
+                    <span>Power Core (Battery)</span>
+                    <span id="battery-val">--%</span>
+                </div>
+                <div class="progress-bg"><div class="progress-fill" id="battery-bar" style="width: 0%"></div></div>
+            </div>
+        </div>
+
+        <div class="panel right-panel">
+            <div class="panel-title">Neural Archive</div>
+            <div id="archive-list">
+                <div class="archive-item">Standing by for memory indexing...</div>
+                <div class="archive-item">Hardware links established.</div>
+            </div>
+        </div>
+
+        <div class="panel bottom-panel">
+            <div id="response-text" class="response-box">"Ready when you are, boss."</div>
+        </div>
+    </div>
+
+    <script>
+        const statusText = document.getElementById('status-text');
+        const responseText = document.getElementById('response-text');
+        const speakBtn = document.getElementById('speak-btn');
+        const core = document.getElementById('reactor-core');
+
+        // Update stats
+        async function updateStats() {
+            try {
+                const res = await fetch('/system_stats.json');
+                const data = await res.json();
+                
+                document.getElementById('cpu-val').innerText = data.cpu + '%';
+                document.getElementById('cpu-bar').style.width = data.cpu + '%';
+                
+                document.getElementById('ram-val').innerText = data.ram + '%';
+                document.getElementById('ram-bar').style.width = data.ram + '%';
+                
+                document.getElementById('battery-val').innerText = data.battery + '%';
+                document.getElementById('battery-bar').style.width = data.battery + '%';
+
+                const now = new Date();
+                document.getElementById('current-time').innerText = now.toLocaleTimeString();
+            } catch(e) {}
+        }
+        setInterval(updateStats, 2000);
+
+        // Recording logic
+        let isRecording = false;
+        speakBtn.onclick = () => {
+            if (isRecording) return;
+            isRecording = true;
+            speakBtn.style.opacity = '0.5';
+            statusText.innerText = "Listening...";
+            
+            fetch('/listen', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    statusText.innerText = "Processing...";
+                    return fetch('/chat', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: data.text || "" })
+                    });
+                })
+                .then(r => r.json())
+                .then(data => {
+                    responseText.innerText = data.response;
+                    statusText.innerText = "Speaking...";
+                    core.classList.add('speaking');
+                    
+                    // Simple text-to-speech visual feedback sync
+                    const wordCount = data.response.split(' ').length;
+                    const estimatedTime = Math.max(2000, wordCount * 250);
+                    
+                    setTimeout(() => {
+                        core.classList.remove('speaking');
+                        statusText.innerText = "Ready when you are, boss.";
+                        isRecording = false;
+                        speakBtn.style.opacity = '1';
+                    }, estimatedTime);
+                });
+        };
+    </script>
+</body>
+</html>

@@ -13,7 +13,7 @@ from friday.config import config
 mcp = FastMCP(
     name=config.SERVER_NAME,
     instructions=(
-        "You are Friday, a Tony Stark-style AI assistant. "
+        "You are Friday, a Amogh-style AI assistant. "
         "You have access to a set of tools to help the user. "
         "Be concise, accurate, and a little witty."
     ),
