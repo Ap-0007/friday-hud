@@ -88,16 +88,20 @@ def get_response(user_input):
     
     if any(word in user_input for word in ["news", "happening", "brief"]):
         return random.choice(CANNED_RESPONSES["news"])
-    elif any(word in user_input for word in ["system", "diagnostic", "status"]):
+
+    if any(word in user_input for word in ["system", "diagnostic", "status"]):
         return random.choice(CANNED_RESPONSES["system"])
-    elif any(word in user_input for word in ["market", "stock", "price"]):
+
+    if any(word in user_input for word in ["market", "stock", "price"]):
         return random.choice(CANNED_RESPONSES["market"])
-    elif any(word in user_input for word in ["hello", "hi", "hey"]):
+
+    if any(word in user_input for word in ["hello", "hi", "hey"]):
         return "Hello boss. Ready to build something incredible?"
-    elif any(word in user_input for word in ["who are you", "what are you"]):
+
+    if any(word in user_input for word in ["who are you", "what are you"]):
         return "I'm F.R.I.D.A.Y. — Fully Responsive Intelligent Digital Assistant for You. At your service, always."
-    else:
-        return random.choice(CANNED_RESPONSES["default"])
+
+    return random.choice(CANNED_RESPONSES["default"])
 
 def main():
     simulate_boot()
