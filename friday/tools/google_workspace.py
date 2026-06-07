@@ -96,12 +96,14 @@ def get_classroom_assignments(**kwargs) -> str:
             work_result = service.courses().courseWork().list(courseId=course_id, pageSize=3).execute()
             works = work_result.get('courseWork', [])
             
-            if works:
-                summary.append(f"📚 {course_name}:")
-                for work in works:
-                    title = work.get('title')
-                    due_date = work.get('dueDate', 'No due date')
-                    summary.append(f"  - {title} (Due: {due_date})")
+            if not works:
+                continue
+
+            summary.append(f"📚 {course_name}:")
+            for work in works:
+                title = work.get('title')
+                due_date = work.get('dueDate', 'No due date')
+                summary.append(f"  - {title} (Due: {due_date})")
 
         if not summary:
             return "Everything is quiet in the Classroom. No pending assignments found."
