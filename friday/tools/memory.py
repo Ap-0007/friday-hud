@@ -48,10 +48,15 @@ def recall_fact(query: str, **kwargs) -> str:
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
+
+        # Escape special characters for SQL LIKE
+        escaped_query = query.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+        like_pattern = f"%{escaped_query}%"
+
         cursor.execute('''
             SELECT fact_key, fact_value FROM neural_archive
-            WHERE fact_key LIKE ? OR fact_value LIKE ?
-        ''', (f"%{query}%", f"%{query}%"))
+            WHERE fact_key LIKE ? ESCAPE '\\' OR fact_value LIKE ? ESCAPE '\\'
+        ''', (like_pattern, like_pattern))
         results = cursor.fetchall()
         conn.close()
 
