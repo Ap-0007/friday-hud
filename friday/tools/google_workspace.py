@@ -87,14 +87,33 @@ def get_classroom_assignments(**kwargs) -> str:
         if not courses:
             return "I couldn't find any active courses in your Classroom, boss."
 
+        course_works = {}
+        def batch_callback(request_id, response, exception):
+            if exception is None:
+                course_works[request_id] = response.get('courseWork', [])
+            else:
+                # Log or handle exception properly if a logging mechanism exists.
+                # Since none is available in this file, we print it to aid debugging.
+                print(f"Error fetching coursework for course {request_id}: {exception}")
+                course_works[request_id] = []
+
+        batch = service.new_batch_http_request(callback=batch_callback)
+        for course in courses:
+            course_id = course['id']
+            batch.add(
+                service.courses().courseWork().list(courseId=course_id, pageSize=3),
+                request_id=course_id
+            )
+
+        if courses:
+            batch.execute()
+
         summary = []
         for course in courses:
             course_id = course['id']
             course_name = course['name']
             
-            # List coursework (assignments)
-            work_result = service.courses().courseWork().list(courseId=course_id, pageSize=3).execute()
-            works = work_result.get('courseWork', [])
+            works = course_works.get(course_id, [])
             
             if works:
                 summary.append(f"📚 {course_name}:")
