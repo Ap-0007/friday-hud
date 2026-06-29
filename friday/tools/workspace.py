@@ -72,8 +72,15 @@ def launch_project(project_id: str, **kwargs) -> str:
     Launch a specific project by ID (directory name).
     This opens the code in VS Code and provides the launch URL if applicable.
     """
-    project_path = os.path.join(WORKSPACE_DIR, project_id)
+    resolved_workspace = os.path.abspath(WORKSPACE_DIR)
+    project_path = os.path.abspath(os.path.join(resolved_workspace, project_id))
     
+    try:
+        if os.path.commonpath([resolved_workspace, project_path]) != resolved_workspace:
+            return f"Security alert: Invalid project ID '{project_id}' attempts to escape workspace."
+    except ValueError:
+        return f"Security alert: Invalid project ID '{project_id}'."
+
     if not os.path.exists(project_path):
         return f"I can't find a project with the ID '{project_id}' in the lab, boss."
 
