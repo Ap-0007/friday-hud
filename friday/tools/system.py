@@ -5,6 +5,7 @@ System tools — time, environment info, shell commands, etc.
 import datetime
 import os
 import subprocess
+import shlex
 import platform
 
 def get_current_time(**kwargs) -> str:
@@ -38,7 +39,9 @@ def run_smart_task(command: str) -> str:
         )
 
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
+        # Secure execution: use shlex.split and shell=False to prevent command injection
+        cmd_args = shlex.split(command)
+        result = subprocess.run(cmd_args, shell=False, capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             return f"Task completed, boss.\n\nOutput:\n{result.stdout}"
         else:
