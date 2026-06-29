@@ -11,7 +11,7 @@ import inspect
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from openai import OpenAI
+from openai import AsyncOpenAI
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
@@ -31,7 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+client = AsyncOpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
 MODEL = "llama3.1"
 
 class ChatRequest(BaseModel):
@@ -124,7 +124,7 @@ async def chat(request: ChatRequest):
     for _ in range(3): # Max 3 recursive tool steps
         payload = messages_history.copy()
         try:
-            res = client.chat.completions.create(model=MODEL, messages=payload, tools=tools_schema)
+            res = await client.chat.completions.create(model=MODEL, messages=payload, tools=tools_schema)
             msg = res.choices[0].message
             
             # CASE 1: Native Tool Calls
