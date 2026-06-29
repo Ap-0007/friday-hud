@@ -6,7 +6,6 @@ import httpx
 import xml.etree.ElementTree as ET
 import asyncio  # Required for parallel execution
 import re
-from datetime import datetime
 
 SEED_FEEDS = [
     'https://feeds.bbci.co.uk/news/world/rss.xml',
