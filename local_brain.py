@@ -180,10 +180,16 @@ async def get_stats():
     battery = 100
     try:
         if platform.system() == "Darwin":
-            res = subprocess.run(["pmset", "-g", "batt"], capture_output=True, text=True)
-            if "InternalBattery" in res.stdout:
+            proc = await asyncio.create_subprocess_exec(
+                "pmset", "-g", "batt",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, _ = await proc.communicate()
+            stdout_str = stdout.decode('utf-8')
+            if "InternalBattery" in stdout_str:
                 # Parse "XX%" from output
-                battery = int(regex.search(r'(\d+)%', res.stdout).group(1))
+                battery = int(regex.search(r'(\d+)%', stdout_str).group(1))
         else:
             batt_obj = psutil.sensors_battery()
             battery = int(batt_obj.percent) if batt_obj else 100
