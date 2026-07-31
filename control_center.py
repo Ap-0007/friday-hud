@@ -158,83 +158,83 @@ def handle_choice(choice):
     elif choice == "4":
         console.print("\n[dim]Initializing Simulator...[/dim]")
         time.sleep(0.5)
-            # Use the local uv environment to run the simulator
-            os.system(f"~/.local/bin/uv run {ROOT_DIR}/maya_simulator.py")
-            input("\nPress Enter to return to Command Center...")
-        elif choice == "5":
-            console.print("\n[dim]Activating Vocal Interface & System Link...[/dim]")
-            import webbrowser
-            import subprocess
-            import time
-            import http.server
-            import socketserver
-            import threading
-            
-            # 1. Determine the correct python executable (prioritize .venv)
-            venv_python = ROOT_DIR / ".venv" / "bin" / "python"
-            python_exe = str(venv_python) if venv_python.exists() else sys.executable
-            console.print(f"[dim]Neural Launcher using: {python_exe}[/dim]")
+        # Use the local uv environment to run the simulator
+        os.system(f"~/.local/bin/uv run {ROOT_DIR}/maya_simulator.py")
+        input("\nPress Enter to return to Command Center...")
+    elif choice == "5":
+        console.print("\n[dim]Activating Vocal Interface & System Link...[/dim]")
+        import webbrowser
+        import subprocess
+        import time
+        import http.server
+        import socketserver
+        import threading
 
-            # 2. Start the stats bridge if not already running
-            subprocess.Popen([python_exe, f"{ROOT_DIR}/stats_bridge.py"], 
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             start_new_session=True)
-            
-            # 3. Start the MCP Server (Port 8000) for Voice Agent connectivity
-            subprocess.Popen([python_exe, f"{ROOT_DIR}/server.py"], 
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             start_new_session=True)
+        # 1. Determine the correct python executable (prioritize .venv)
+        venv_python = ROOT_DIR / ".venv" / "bin" / "python"
+        python_exe = str(venv_python) if venv_python.exists() else sys.executable
+        console.print(f"[dim]Neural Launcher using: {python_exe}[/dim]")
 
-            # 4. Start the Local Brain API & Web server (Port 8080)
-            PORT = 8080
-            subprocess.Popen([python_exe, f"{ROOT_DIR}/local_brain.py"], 
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             start_new_session=True)
-            
-            # Wait a moment for server to boot
-            time.sleep(2.5)
-            
-            hud_url = f"http://127.0.0.1:{PORT}/hud.html"
-            webbrowser.open(hud_url)
-            console.print(f"[green]Dashboard Online: {hud_url}[/green]")
-            console.print("[yellow]Note: Allow microphone access in your browser to speak commands.[/yellow]")
-            input("\nPress Enter to return to Command Center...")
-        elif choice == "6":
-            clear_screen()
-            console.print(Panel(
-                "[bold yellow]GOOGLE WORKSPACE INTEGRATION PROTOCOL[/bold yellow]\n\n"
-                "To allow Maya to read your Gmail and Classroom:\n\n"
-                "1. Go to [bold cyan]Google Cloud Console[/bold cyan] (console.cloud.google.com)\n"
-                "2. Create a project and enable [bold]Gmail API[/bold] and [bold]Google Classroom API[/bold].\n"
-                "3. Go to 'APIs & Services' -> 'Credentials'.\n"
-                "4. Click 'Create Credentials' -> 'OAuth client ID' (Application type: Desktop).\n"
-                "5. Download the JSON and rename it to [bold white]credentials.json[/bold white].\n"
-                "6. Place it in: [italic]" + str(ROOT_DIR) + "[/italic]\n\n"
-                "Once done, Maya will handle the login on first run.",
-                title="Google Workspace Setup",
-                border_style="yellow"
-            ))
-            input("\nPress Enter to return to Command Center...")
-        elif choice == "7":
-            clear_screen()
-            current_provider = os.getenv("LLM_PROVIDER", "gemini")
-            console.print(Panel(
-                f"[bold cyan]NEURAL CORE SELECTOR[/bold cyan]\n\n"
-                f"Current Provider: [bold white]{current_provider}[/bold white]\n\n"
-                "1. [bold green]Ollama (Local - FREE)[/bold green]\n"
-                "2. [bold blue]Gemini (Cloud - Google)[/bold blue]\n"
-                "3. [bold white]OpenAI (Cloud - GPT-4o)[/bold white]\n\n"
-                "Note: Local mode needs Ollama running + llama3.1 model.",
-                title="AI Provider Settings",
-                border_style="cyan"
-            ))
-            prov_choice = Prompt.ask("\nSelect New Provider", choices=["1", "2", "3"], default="1")
-            new_prov = {"1": "ollama", "2": "gemini", "3": "openai"}[prov_choice]
-            set_key(str(ENV_FILE), "LLM_PROVIDER", new_prov)
-            console.print(f"\n[green]Switched brain to {new_prov}. Neural pathways updated.[/green]")
-            input("\nPress Enter to return to Command Center...")
-        elif choice == "8":
-            console.print("\n[italic]Signing off. Stay safe, boss.[/italic]")
+        # 2. Start the stats bridge if not already running
+        subprocess.Popen([python_exe, f"{ROOT_DIR}/stats_bridge.py"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+
+        # 3. Start the MCP Server (Port 8000) for Voice Agent connectivity
+        subprocess.Popen([python_exe, f"{ROOT_DIR}/server.py"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+
+        # 4. Start the Local Brain API & Web server (Port 8080)
+        PORT = 8080
+        subprocess.Popen([python_exe, f"{ROOT_DIR}/local_brain.py"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+
+        # Wait a moment for server to boot
+        time.sleep(2.5)
+
+        hud_url = f"http://127.0.0.1:{PORT}/hud.html"
+        webbrowser.open(hud_url)
+        console.print(f"[green]Dashboard Online: {hud_url}[/green]")
+        console.print("[yellow]Note: Allow microphone access in your browser to speak commands.[/yellow]")
+        input("\nPress Enter to return to Command Center...")
+    elif choice == "6":
+        clear_screen()
+        console.print(Panel(
+            "[bold yellow]GOOGLE WORKSPACE INTEGRATION PROTOCOL[/bold yellow]\n\n"
+            "To allow Maya to read your Gmail and Classroom:\n\n"
+            "1. Go to [bold cyan]Google Cloud Console[/bold cyan] (console.cloud.google.com)\n"
+            "2. Create a project and enable [bold]Gmail API[/bold] and [bold]Google Classroom API[/bold].\n"
+            "3. Go to 'APIs & Services' -> 'Credentials'.\n"
+            "4. Click 'Create Credentials' -> 'OAuth client ID' (Application type: Desktop).\n"
+            "5. Download the JSON and rename it to [bold white]credentials.json[/bold white].\n"
+            "6. Place it in: [italic]" + str(ROOT_DIR) + "[/italic]\n\n"
+            "Once done, Maya will handle the login on first run.",
+            title="Google Workspace Setup",
+            border_style="yellow"
+        ))
+        input("\nPress Enter to return to Command Center...")
+    elif choice == "7":
+        clear_screen()
+        current_provider = os.getenv("LLM_PROVIDER", "gemini")
+        console.print(Panel(
+            f"[bold cyan]NEURAL CORE SELECTOR[/bold cyan]\n\n"
+            f"Current Provider: [bold white]{current_provider}[/bold white]\n\n"
+            "1. [bold green]Ollama (Local - FREE)[/bold green]\n"
+            "2. [bold blue]Gemini (Cloud - Google)[/bold blue]\n"
+            "3. [bold white]OpenAI (Cloud - GPT-4o)[/bold white]\n\n"
+            "Note: Local mode needs Ollama running + llama3.1 model.",
+            title="AI Provider Settings",
+            border_style="cyan"
+        ))
+        prov_choice = Prompt.ask("\nSelect New Provider", choices=["1", "2", "3"], default="1")
+        new_prov = {"1": "ollama", "2": "gemini", "3": "openai"}[prov_choice]
+        set_key(str(ENV_FILE), "LLM_PROVIDER", new_prov)
+        console.print(f"\n[green]Switched brain to {new_prov}. Neural pathways updated.[/green]")
+        input("\nPress Enter to return to Command Center...")
+    elif choice == "8":
+        console.print("\n[italic]Signing off. Stay safe, boss.[/italic]")
 
 if __name__ == "__main__":
     try:
