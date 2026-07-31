@@ -8,9 +8,16 @@ import os
 from datetime import datetime
 
 DB_PATH = "memory.db"
+_conn = None
+
+def _get_connection():
+    global _conn
+    if _conn is None:
+        _conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    return _conn
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = _get_connection()
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS neural_archive (
@@ -21,7 +28,6 @@ def init_db():
         )
     ''')
     conn.commit()
-    conn.close()
 
 def remember_fact(key: str, value: str, **kwargs) -> str:
     """
@@ -29,14 +35,13 @@ def remember_fact(key: str, value: str, **kwargs) -> str:
     Example: remember_fact("coffee_preference", "Black, no sugar")
     """
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = _get_connection()
         cursor = conn.cursor()
         cursor.execute('''
             INSERT OR REPLACE INTO neural_archive (fact_key, fact_value, timestamp)
             VALUES (?, ?, ?)
         ''', (key, value, datetime.now().isoformat()))
         conn.commit()
-        conn.close()
         return f"Information archived, boss. I'll remember that {key} is {value}."
     except Exception as e:
         return f"Neural link error while archiving: {str(e)}"
@@ -46,14 +51,13 @@ def recall_fact(query: str, **kwargs) -> str:
     Search the neural archive for matching facts.
     """
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = _get_connection()
         cursor = conn.cursor()
         cursor.execute('''
             SELECT fact_key, fact_value FROM neural_archive
             WHERE fact_key LIKE ? OR fact_value LIKE ?
         ''', (f"%{query}%", f"%{query}%"))
         results = cursor.fetchall()
-        conn.close()
 
         if not results:
             return f"I've searched the archives, boss, but I found no record of '{query}'."
@@ -66,11 +70,10 @@ def recall_fact(query: str, **kwargs) -> str:
 def list_all_memories(**kwargs) -> str:
     """List everything currently stored in the memory archive."""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = _get_connection()
         cursor = conn.cursor()
         cursor.execute('SELECT fact_key, fact_value FROM neural_archive')
         results = cursor.fetchall()
-        conn.close()
 
         if not results:
             return "The archive is currently empty, boss."
