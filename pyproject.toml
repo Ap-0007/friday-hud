@@ -16,6 +16,8 @@ dependencies = [
     "livekit-plugins-google>=1.5.1",
     "openai>=2.30.0",
     "psutil>=7.2.2",
+    "pytest>=9.0.3",
+    "pytest-asyncio>=1.4.0",
     "python-dotenv",
     "regex>=2026.4.4",
     "requests>=2.33.1",
