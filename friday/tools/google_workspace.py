@@ -54,15 +54,26 @@ def get_unread_emails(max_results: int = 5, **kwargs) -> str:
         if not messages:
             return "You're all caught up, boss. No unread emails in the inbox."
 
+        summary_dict = {}
+
+        def callback(request_id, response, exception):
+            if exception is None:
+                payload = response['payload']
+                headers = payload.get('headers', [])
+                subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
+                sender = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown Sender')
+                snippet = response.get('snippet', '')
+                summary_dict[response['id']] = f"- From: {sender}\n  Subject: {subject}\n  Snippet: {snippet}"
+
+        batch = service.new_batch_http_request(callback=callback)
+        for msg in messages:
+            batch.add(service.users().messages().get(userId='me', id=msg['id']))
+        batch.execute()
+
         summary = []
         for msg in messages:
-            m = service.users().messages().get(userId='me', id=msg['id']).execute()
-            payload = m['payload']
-            headers = payload.get('headers', [])
-            subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
-            sender = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown Sender')
-            snippet = m.get('snippet', '')
-            summary.append(f"- From: {sender}\n  Subject: {subject}\n  Snippet: {snippet}")
+            if msg['id'] in summary_dict:
+                summary.append(summary_dict[msg['id']])
 
         return "Here are your latest unread emails, boss:\n\n" + "\n\n".join(summary)
 
