@@ -111,7 +111,7 @@ def parse_maybe_json(text):
         try:
             d = json.loads(match.group(0))
             if "name" in d: return d
-        except: pass
+        except Exception: pass
     return None
 
 @app.post("/chat")
@@ -187,7 +187,7 @@ async def get_stats():
         else:
             batt_obj = psutil.sensors_battery()
             battery = int(batt_obj.percent) if batt_obj else 100
-    except:
+    except Exception:
         pass
 
     return {
