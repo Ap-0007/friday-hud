@@ -55,14 +55,23 @@ def get_unread_emails(max_results: int = 5, **kwargs) -> str:
             return "You're all caught up, boss. No unread emails in the inbox."
 
         summary = []
+
+        def _callback(request_id, response, exception):
+            if exception is not None:
+                summary.append(f"- Error fetching email {request_id}: {exception}")
+            else:
+                payload = response['payload']
+                headers = payload.get('headers', [])
+                subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
+                sender = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown Sender')
+                snippet = response.get('snippet', '')
+                summary.append(f"- From: {sender}\n  Subject: {subject}\n  Snippet: {snippet}")
+
+        batch = service.new_batch_http_request(callback=_callback)
         for msg in messages:
-            m = service.users().messages().get(userId='me', id=msg['id']).execute()
-            payload = m['payload']
-            headers = payload.get('headers', [])
-            subject = next((h['value'] for h in headers if h['name'] == 'Subject'), 'No Subject')
-            sender = next((h['value'] for h in headers if h['name'] == 'From'), 'Unknown Sender')
-            snippet = m.get('snippet', '')
-            summary.append(f"- From: {sender}\n  Subject: {subject}\n  Snippet: {snippet}")
+            batch.add(service.users().messages().get(userId='me', id=msg['id']), request_id=msg['id'])
+
+        batch.execute()
 
         return "Here are your latest unread emails, boss:\n\n" + "\n\n".join(summary)
 
