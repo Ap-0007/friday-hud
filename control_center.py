@@ -158,10 +158,10 @@ def handle_choice(choice):
     elif choice == "4":
         console.print("\n[dim]Initializing Simulator...[/dim]")
         time.sleep(0.5)
-            # Use the local uv environment to run the simulator
-            os.system(f"~/.local/bin/uv run {ROOT_DIR}/maya_simulator.py")
-            input("\nPress Enter to return to Command Center...")
-        elif choice == "5":
+        # Use the local uv environment to run the simulator
+        os.system(f"~/.local/bin/uv run {ROOT_DIR}/maya_simulator.py")
+        input("\nPress Enter to return to Command Center...")
+    elif choice == "5":
             console.print("\n[dim]Activating Vocal Interface & System Link...[/dim]")
             import webbrowser
             import subprocess
@@ -199,7 +199,7 @@ def handle_choice(choice):
             console.print(f"[green]Dashboard Online: {hud_url}[/green]")
             console.print("[yellow]Note: Allow microphone access in your browser to speak commands.[/yellow]")
             input("\nPress Enter to return to Command Center...")
-        elif choice == "6":
+    elif choice == "6":
             clear_screen()
             console.print(Panel(
                 "[bold yellow]GOOGLE WORKSPACE INTEGRATION PROTOCOL[/bold yellow]\n\n"
@@ -215,7 +215,7 @@ def handle_choice(choice):
                 border_style="yellow"
             ))
             input("\nPress Enter to return to Command Center...")
-        elif choice == "7":
+    elif choice == "7":
             clear_screen()
             current_provider = os.getenv("LLM_PROVIDER", "gemini")
             console.print(Panel(
@@ -233,7 +233,7 @@ def handle_choice(choice):
             set_key(str(ENV_FILE), "LLM_PROVIDER", new_prov)
             console.print(f"\n[green]Switched brain to {new_prov}. Neural pathways updated.[/green]")
             input("\nPress Enter to return to Command Center...")
-        elif choice == "8":
+    elif choice == "8":
             console.print("\n[italic]Signing off. Stay safe, boss.[/italic]")
 
 if __name__ == "__main__":
