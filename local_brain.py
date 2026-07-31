@@ -107,12 +107,25 @@ tools_schema = [
 
 def parse_maybe_json(text):
     match = regex.search(r'\{(?:[^{}]|(?R))*\}', text)
-    if match:
-        try:
-            d = json.loads(match.group(0))
-            if "name" in d: return d
-        except: pass
+    if not match:
+        return None
+
+    try:
+        d = json.loads(match.group(0))
+        if "name" in d: return d
+    except: pass
     return None
+
+
+async def _execute_tool(f_name, f_args):
+    # Sanitize arguments: remove empty strings/malformed keys
+    if isinstance(f_args, dict):
+        f_args = {k: v for k, v in f_args.items() if k and k.strip()}
+
+    result = AVAILABLE_TOOLS[f_name](**f_args) if f_name in AVAILABLE_TOOLS else "Not found"
+    if inspect.iscoroutine(result):
+        result = await result
+    return result
 
 @app.post("/chat")
 async def chat(request: ChatRequest):
@@ -132,13 +145,7 @@ async def chat(request: ChatRequest):
                 messages_history.append(msg)
                 for tc in msg.tool_calls:
                     f_name, f_args = tc.function.name, json.loads(tc.function.arguments)
-                    # Sanitize arguments: remove empty strings/malformed keys
-                    if isinstance(f_args, dict):
-                        f_args = {k: v for k, v in f_args.items() if k and k.strip()}
-                    
-                    result = AVAILABLE_TOOLS[f_name](**f_args) if f_name in AVAILABLE_TOOLS else "Not found"
-                    if inspect.iscoroutine(result):
-                        result = await result
+                    result = await _execute_tool(f_name, f_args)
                     messages_history.append({"role": "tool", "tool_call_id": tc.id, "name": f_name, "content": str(result)})
                 continue
             
@@ -146,13 +153,7 @@ async def chat(request: ChatRequest):
             fb = parse_maybe_json(msg.content or "")
             if fb:
                 f_name, f_args = fb.get("name"), fb.get("parameters", fb.get("arguments", {}))
-                # Sanitize arguments: remove empty strings/malformed keys
-                if isinstance(f_args, dict):
-                    f_args = {k: v for k, v in f_args.items() if k and k.strip()}
-                
-                result = AVAILABLE_TOOLS[f_name](**f_args) if f_name in AVAILABLE_TOOLS else "Not found"
-                if inspect.iscoroutine(result):
-                    result = await result
+                result = await _execute_tool(f_name, f_args)
                 messages_history.append({"role": "assistant", "content": f"Manual call: {f_name}"})
                 messages_history.append({"role": "user", "content": f"The tool {f_name} returned: {str(result)}. Now summarize this for the user."})
                 continue
