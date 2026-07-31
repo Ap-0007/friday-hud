@@ -31,7 +31,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
+client = OpenAI(base_url="http://localhost:11434/v1", api_key=os.getenv("OPENAI_API_KEY", "ollama"))
 MODEL = "llama3.1"
 
 class ChatRequest(BaseModel):
