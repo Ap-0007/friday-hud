@@ -4,6 +4,7 @@ System tools — time, environment info, shell commands, etc.
 
 import datetime
 import os
+import shlex
 import subprocess
 import platform
 
@@ -38,7 +39,10 @@ def run_smart_task(command: str) -> str:
         )
 
     try:
-        result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
+        args = shlex.split(command)
+        if not args:
+            return "No command provided."
+        result = subprocess.run(args, shell=False, capture_output=True, text=True, timeout=10)
         if result.returncode == 0:
             return f"Task completed, boss.\n\nOutput:\n{result.stdout}"
         else:
